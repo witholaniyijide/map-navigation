@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Vacation Planner</title>
+
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+
+    <div class="logo">
+        🚗 Family Vacation
+    </div>
+
+    <div class="trip-status">
+        <span id="today">Tuesday</span>
+    </div>
+
+</header>
+
+<div class="container">
+
+    <aside>
+
+        <h2>Trip Plan</h2>
+
+        <div class="day active">
+
+            <h3>Tuesday</h3>
+
+            <p>Agric → Berger → Akowonjo → Iju → Grailland</p>
+
+            <button onclick="loadRoute('tuesday')">
+                Start Journey
+            </button>
+
+        </div>
+
+        <div class="day">
+
+            <h3>Wednesday</h3>
+
+            <p>Stay at Grailland</p>
+
+        </div>
+
+        <div class="day">
+
+            <h3>Thursday</h3>
+
+            <p>12:00 PM Departure</p>
+
+            <button onclick="loadRoute('thursday')">
+                Continue Journey
+            </button>
+
+        </div>
+
+        <div class="day">
+
+            <h3>Friday</h3>
+
+            <p>Stay at Whimspring Palms</p>
+
+        </div>
+
+        <div class="day">
+
+            <h3>Saturday</h3>
+
+            <button onclick="loadRoute('saturday')">
+
+                Return Home
+
+            </button>
+
+        </div>
+
+    </aside>
+
+    <main>
+
+        <div id="map"></div>
+
+        <div class="info">
+
+            <div>
+
+                <strong>Next Destination</strong>
+
+                <h2 id="destination">
+
+                    Grailland
+
+                </h2>
+
+            </div>
+
+            <div>
+
+                <strong>Status</strong>
+
+                <h2 id="status">
+
+                    Ready
+
+                </h2>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.js"></script>
+
+<script src="routes.js"></script>
+
+<script src="app.js"></script>
+
+</body>
+</html>
