@@ -12,7 +12,7 @@
  */
 const ROUTING = {
     // Leave empty to use OSRM. Set to a free OpenRouteService key to use ORS.
-    orsApiKey: "",
+    orsApiKey: "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjRmZjYyN2MxYzY0NjQ5MmM4MjVmMDEyYTVhZDMwOWE0IiwiaCI6Im11cm11cjY0In0=",
     osrmBase: "https://router.project-osrm.org",
     orsBase: "https://api.openrouteservice.org",
     timeoutMs: 8000
