@@ -1,0 +1,13 @@
+{
+    "name": "family-vacation-navigator",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "start": "npx serve .",
+        "deploy": "vercel --prod"
+    },
+    "devDependencies": {
+        "serve": "latest",
+        "vercel": "latest"
+    }
+}
