@@ -1,191 +1,211 @@
-*{
-
-margin:0;
-padding:0;
-box-sizing:border-box;
-
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-body{
-
-font-family:Arial,Helvetica,sans-serif;
-background:#f4f7fb;
-
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f7fb;
+    color: #172033;
 }
 
-header{
-
-height:70px;
-
-background:#1565c0;
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-padding:0 25px;
-
-color:white;
-
+header {
+    min-height: 70px;
+    background: #1565c0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 0 25px;
+    color: white;
 }
 
-.container{
-
-display:flex;
-
-height:calc(100vh - 70px);
-
+.logo {
+    font-size: 1.2rem;
+    font-weight: 700;
 }
 
-aside{
-
-width:320px;
-
-background:white;
-
-overflow:auto;
-
-border-right:1px solid #ddd;
-
-padding:20px;
-
+.trip-status {
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: 700;
 }
 
-.day{
-
-padding:15px;
-
-margin-bottom:15px;
-
-border-radius:10px;
-
-background:#f7f7f7;
-
+.container {
+    display: flex;
+    height: calc(100vh - 70px);
 }
 
-.day.active{
-
-border-left:5px solid #1565c0;
-
+aside {
+    width: 320px;
+    background: white;
+    overflow: auto;
+    border-right: 1px solid #ddd;
+    padding: 20px;
 }
 
-.day h3{
-
-margin-bottom:10px;
-
+aside h2 {
+    margin-bottom: 16px;
 }
 
-.day p{
-
-margin-bottom:15px;
-
-line-height:1.5;
-
+.day {
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 14px;
+    background: #f7f7f7;
+    border: 1px solid transparent;
 }
 
-button{
-
-background:#1565c0;
-
-color:white;
-
-padding:10px 16px;
-
-border:none;
-
-border-radius:8px;
-
-cursor:pointer;
-
-width:100%;
-
+.day.active {
+    border-color: #1565c0;
+    border-left: 5px solid #1565c0;
+    background: #eef6ff;
 }
 
-button:hover{
-
-background:#0d47a1;
-
+.day h3 {
+    margin-bottom: 10px;
 }
 
-main{
-
-flex:1;
-
-position:relative;
-
+.day p {
+    margin-bottom: 15px;
+    line-height: 1.5;
 }
 
-#map{
-
-width:100%;
-
-height:100%;
-
+.stay-day p {
+    margin-bottom: 0;
 }
 
-.info{
-
-position:absolute;
-
-left:20px;
-
-bottom:20px;
-
-background:white;
-
-padding:15px;
-
-border-radius:12px;
-
-box-shadow:0 5px 20px rgba(0,0,0,.15);
-
-min-width:250px;
-
+button {
+    background: #1565c0;
+    color: white;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: 700;
+    transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.info h2{
-
-margin-top:5px;
-
-margin-bottom:10px;
-
+button:hover {
+    background: #0d47a1;
+    transform: translateY(-1px);
 }
 
-@media(max-width:900px){
-
-.container{
-
-flex-direction:column;
-
+main {
+    flex: 1;
+    position: relative;
+    min-height: 0;
 }
 
-aside{
-
-width:100%;
-
-height:340px;
-
+#map {
+    width: 100%;
+    height: 100%;
 }
 
-}
-.info button{
-
-margin-top:15px;
-
-background:#2E7D32;
-
-}
-
-.info button:hover{
-
-background:#1B5E20;
-
+.info {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    max-width: 720px;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 16px;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(8px);
 }
 
-.mapboxgl-marker{
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 14px;
+}
 
-cursor:pointer;
+.info strong {
+    color: #526070;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
 
+.info h2 {
+    margin-top: 6px;
+    font-size: 1.05rem;
+}
+
+.actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.secondary {
+    background: #455a64;
+}
+
+.secondary:hover,
+.secondary.is-active {
+    background: #0d47a1;
+}
+
+.google {
+    background: #2e7d32;
+}
+
+.google:hover {
+    background: #1b5e20;
+}
+
+.leaflet-marker-icon {
+    cursor: pointer;
+}
+
+@media (max-width: 900px) {
+    header {
+        min-height: 62px;
+        padding: 0 16px;
+    }
+
+    .container {
+        flex-direction: column;
+        height: calc(100vh - 62px);
+    }
+
+    aside {
+        width: 100%;
+        height: 255px;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+        padding: 14px;
+    }
+
+    .day {
+        margin-bottom: 10px;
+    }
+
+    main {
+        min-height: 420px;
+    }
+
+    .info {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        padding: 12px;
+    }
+
+    .info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .actions {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
 }
