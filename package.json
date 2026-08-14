@@ -4,9 +4,12 @@
     "private": true,
     "scripts": {
         "start": "npx serve .",
+        "check": "node --check app.js && node --check routes.js && node --check sw.js",
+        "test": "node test/smoke.mjs",
         "deploy": "vercel --prod"
     },
     "devDependencies": {
+        "playwright": "^1.48.0",
         "serve": "latest",
         "vercel": "latest"
     }

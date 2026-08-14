@@ -26,6 +26,8 @@ const DAY_PLAN = {
     Saturday: "Return home"
 };
 
+const STORAGE_KEY = "vacation-nav:last-route";
+
 let currentRouteKey;
 let currentRoute;
 let userLocation = null;
@@ -162,6 +164,7 @@ function loadRoute(routeKey, scrollToMap = false) {
 
     currentRouteKey = routeKey;
     currentRoute = route;
+    saveRoute(routeKey);
 
     destinationEl.textContent = route.destination;
     updateActiveDay(routeKey);
@@ -299,7 +302,28 @@ function updateTodayLabel() {
     if (todayPlanEl) todayPlanEl.textContent = DAY_PLAN[weekday] || "Trip starts Tuesday";
 }
 
+function saveRoute(routeKey) {
+    try {
+        localStorage.setItem(STORAGE_KEY, routeKey);
+    } catch (error) {
+        /* Storage can be unavailable (private mode); persistence is optional. */
+    }
+}
+
+function readSavedRoute() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved && routes[saved] ? saved : null;
+    } catch (error) {
+        return null;
+    }
+}
+
 function pickInitialRoute() {
+    // A route the traveller explicitly picked last time wins over the default.
+    const saved = readSavedRoute();
+    if (saved) return saved;
+
     const weekday = currentWeekday();
 
     if (DAY_TO_ROUTE[weekday]) return DAY_TO_ROUTE[weekday];
