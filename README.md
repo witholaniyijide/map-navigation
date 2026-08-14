@@ -1,20 +1,16 @@
 # Family Vacation Navigator
 
-A mobile-friendly Mapbox navigation planner for the Tuesday, Thursday, and Saturday family vacation routes.
+A mobile-friendly OpenStreetMap navigation planner for the Tuesday, Thursday, and Saturday family vacation routes.
 
 ## Features
 
-- Mapbox GL map with real Mapbox Directions API routing for drivable roads.
+- OpenStreetMap/Leaflet map that works without Mapbox billing or card details.
 - Live GPS marker with high-accuracy geolocation.
-- ETA and remaining-distance cards from Mapbox route summaries.
+- ETA and remaining-distance estimates based on the saved route path.
 - Route switching for Tuesday, Thursday, and Saturday.
 - Follow My Location toggle.
 - Google Maps fallback links for every route.
 - Vercel-ready static deployment.
-
-## Mapbox token
-
-Replace `PASTE_YOUR_MAPBOX_ACCESS_TOKEN_HERE` in `app.js`, or define `window.MAPBOX_ACCESS_TOKEN` before `app.js` loads.
 
 ## Deploy to Vercel
 

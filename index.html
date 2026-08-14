@@ -16,36 +16,94 @@
 </header>
 
 <div class="container">
-    <aside>
-        <h2>Trip Plan</h2>
-
-        <div class="day active" data-route="tuesday">
-            <h3>Tuesday</h3>
-            <p>Agric → Berger → Akowonjo → Iju → Grailland</p>
-            <button type="button">Start Journey</button>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <span class="eyebrow">Vacation Route</span>
+            <h2>Trip Plan</h2>
+            <p>Choose the travel day below. Stay days are shown as notes.</p>
         </div>
 
-        <div class="day stay-day">
-            <h3>Wednesday</h3>
-            <p>Stay at Grailland</p>
+        <div class="route-list">
+            <article class="day active" data-route="tuesday">
+                <div class="day-copy">
+                    <span class="day-label">Tuesday</span>
+                    <h3>Agric to Grailland</h3>
+                    <p>Agric → Berger → Akowonjo → Iju → Grailland</p>
+                </div>
+                <div class="card-actions">
+                    <button type="button" class="route-button">Start</button>
+                    <button type="button" class="note-button" data-note-route="tuesday">Note</button>
+                </div>
+            </article>
+
+            <article class="day stay-day">
+                <div class="day-copy">
+                    <span class="day-label">Wednesday</span>
+                    <h3>Rest Day</h3>
+                    <p>Stay at Grailland</p>
+                </div>
+            </article>
+
+            <article class="day" data-route="thursday">
+                <div class="day-copy">
+                    <span class="day-label">Thursday</span>
+                    <h3>Grailland to Whimspring Palms</h3>
+                    <p>12:00 PM departure via Lagos-Badagry axis</p>
+                </div>
+                <div class="card-actions">
+                    <button type="button" class="route-button">Continue</button>
+                    <button type="button" class="note-button" data-note-route="thursday">Note</button>
+                </div>
+            </article>
+
+            <article class="day stay-day">
+                <div class="day-copy">
+                    <span class="day-label">Friday</span>
+                    <h3>Resort Day</h3>
+                    <p>Stay at Whimspring Palms</p>
+                </div>
+            </article>
+
+            <article class="day" data-route="saturday">
+                <div class="day-copy">
+                    <span class="day-label">Saturday</span>
+                    <h3>Return Home</h3>
+                    <p>Whimspring Palms → Agric</p>
+                </div>
+                <div class="card-actions">
+                    <button type="button" class="route-button">Return</button>
+                    <button type="button" class="note-button" data-note-route="saturday">Note</button>
+                </div>
+            </article>
         </div>
 
-        <div class="day" data-route="thursday">
-            <h3>Thursday</h3>
-            <p>12:00 PM Departure to Whimspring Palms</p>
-            <button type="button">Continue Journey</button>
-        </div>
+        <section class="activities" aria-labelledby="activitiesTitle">
+            <span class="eyebrow">Simple Ideas</span>
+            <h2 id="activitiesTitle">Possible Activities</h2>
 
-        <div class="day stay-day">
-            <h3>Friday</h3>
-            <p>Stay at Whimspring Palms</p>
-        </div>
+            <div class="activity-place">
+                <h3>Grailland</h3>
+                <ul>
+                    <li>Nature walk</li>
+                    <li>Relaxation</li>
+                    <li>Prayer/meditation</li>
+                    <li>Family photos</li>
+                    <li>Evening stroll</li>
+                </ul>
+            </div>
 
-        <div class="day" data-route="saturday">
-            <h3>Saturday</h3>
-            <p>Return home to Agric</p>
-            <button type="button">Return Home</button>
-        </div>
+            <div class="activity-place">
+                <h3>Whimspring Palms</h3>
+                <ul>
+                    <li>Swimming</li>
+                    <li>Beach walk</li>
+                    <li>Restaurant</li>
+                    <li>Family games</li>
+                    <li>Relax by the lagoon</li>
+                    <li>Evening pictures</li>
+                </ul>
+            </div>
+        </section>
     </aside>
 
     <main>
@@ -77,6 +135,16 @@
             </div>
         </section>
     </main>
+</div>
+
+<div class="modal" id="routeNoteModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-note></div>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="noteTitle">
+        <button type="button" class="modal-close" id="closeNoteButton" aria-label="Close route note">×</button>
+        <span class="eyebrow">Trip Side Note</span>
+        <h2 id="noteTitle">Route note</h2>
+        <ol id="noteSteps" class="note-steps"></ol>
+    </section>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>

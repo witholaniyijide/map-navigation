@@ -1,6 +1,7 @@
 const AVERAGE_CITY_SPEED_KPH = 35;
 
 const map = L.map("map", {
+    preferCanvas: true,
     zoomControl: false
 }).setView([6.60, 3.38], 10);
 
@@ -27,6 +28,11 @@ const distanceEl = document.getElementById("distance");
 const googleButton = document.getElementById("googleMapsButton");
 const followButton = document.getElementById("followButton");
 const dayCards = document.querySelectorAll(".day[data-route]");
+const noteButtons = document.querySelectorAll(".note-button[data-note-route]");
+const routeNoteModal = document.getElementById("routeNoteModal");
+const closeNoteButton = document.getElementById("closeNoteButton");
+const noteTitleEl = document.getElementById("noteTitle");
+const noteStepsEl = document.getElementById("noteSteps");
 
 function toLatLng([lng, lat]) {
     return [lat, lng];
@@ -126,7 +132,13 @@ function showStops(route) {
     });
 }
 
+function refreshMapSize() {
+    map.invalidateSize();
+}
+
 function fitToRoute(coordinates) {
+    refreshMapSize();
+
     const latLngs = coordinates.map(toLatLng);
     const bounds = L.latLngBounds(latLngs);
 
@@ -152,6 +164,7 @@ function loadRoute(routeKey) {
     drawRoute(currentRoute.coordinates);
     updateRouteSummary(getRouteSummary(currentRoute));
     fitToRoute(currentRoute.coordinates);
+    window.setTimeout(refreshMapSize, 150);
     setStatus(userLocation ? "Live GPS ready" : "Route ready");
 }
 
@@ -213,6 +226,28 @@ function openGoogleMaps() {
     window.open(currentRoute.google, "_blank", "noopener,noreferrer");
 }
 
+function openRouteNote(routeKey) {
+    const route = routes[routeKey];
+
+    noteTitleEl.textContent = route.noteTitle || route.name;
+    noteStepsEl.innerHTML = "";
+
+    route.noteSteps.forEach(step => {
+        const item = document.createElement("li");
+        item.textContent = step;
+        noteStepsEl.appendChild(item);
+    });
+
+    routeNoteModal.classList.add("is-open");
+    routeNoteModal.setAttribute("aria-hidden", "false");
+    closeNoteButton.focus();
+}
+
+function closeRouteNote() {
+    routeNoteModal.classList.remove("is-open");
+    routeNoteModal.setAttribute("aria-hidden", "true");
+}
+
 function toggleFollowLocation() {
     followLocation = !followLocation;
     followButton.classList.toggle("is-active", followLocation);
@@ -227,8 +262,29 @@ googleButton.addEventListener("click", openGoogleMaps);
 followButton.addEventListener("click", toggleFollowLocation);
 
 dayCards.forEach(card => {
-    card.querySelector("button").addEventListener("click", () => loadRoute(card.dataset.route));
+    card.querySelector(".route-button").addEventListener("click", () => loadRoute(card.dataset.route));
 });
 
+noteButtons.forEach(button => {
+    button.addEventListener("click", () => openRouteNote(button.dataset.noteRoute));
+});
+
+closeNoteButton.addEventListener("click", closeRouteNote);
+routeNoteModal.addEventListener("click", event => {
+    if (event.target.hasAttribute("data-close-note")) {
+        closeRouteNote();
+    }
+});
+
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && routeNoteModal.classList.contains("is-open")) {
+        closeRouteNote();
+    }
+});
+
+window.addEventListener("resize", refreshMapSize);
+window.addEventListener("orientationchange", () => window.setTimeout(refreshMapSize, 250));
+
 loadRoute("tuesday");
+window.setTimeout(refreshMapSize, 150);
 startGps();
