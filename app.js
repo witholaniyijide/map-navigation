@@ -1,26 +1,12 @@
 const AVERAGE_CITY_SPEED_KPH = 35;
 
-const map = L.map("map", {
-    preferCanvas: true,
-    zoomControl: false
-}).setView([6.60, 3.38], 10);
-
-L.control.zoom({ position: "topright" }).addTo(map);
-
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
-
-let gpsMarker;
-let gpsAccuracyCircle;
-let routeLine;
 let currentRouteKey;
 let currentRoute;
 let userLocation;
 let followLocation = true;
-let stopMarkers = [];
 
+const mapFrame = document.getElementById("mapFrame");
+const mapFallbackLink = document.getElementById("mapFallbackLink");
 const destinationEl = document.getElementById("destination");
 const statusEl = document.getElementById("status");
 const etaEl = document.getElementById("eta");
@@ -33,10 +19,6 @@ const routeNoteModal = document.getElementById("routeNoteModal");
 const closeNoteButton = document.getElementById("closeNoteButton");
 const noteTitleEl = document.getElementById("noteTitle");
 const noteStepsEl = document.getElementById("noteSteps");
-
-function toLatLng([lng, lat]) {
-    return [lat, lng];
-}
 
 function formatDistance(meters = 0) {
     if (meters >= 1000) {
@@ -96,62 +78,22 @@ function updateActiveDay(routeKey) {
     dayCards.forEach(card => {
         card.classList.toggle("active", card.dataset.route === routeKey);
     });
+}
 
     document.getElementById("today").textContent = routes[routeKey].day;
-}
-
-function drawRoute(coordinates) {
-    const latLngs = coordinates.map(toLatLng);
-
-    if (routeLine) {
-        routeLine.setLatLngs(latLngs);
-        return;
-    }
-
-    routeLine = L.polyline(latLngs, {
-        color: "#1565C0",
-        weight: 6,
-        opacity: 0.85,
-        lineJoin: "round"
-    }).addTo(map);
-}
-
-function showStops(route) {
-    stopMarkers.forEach(marker => marker.remove());
-    stopMarkers = [];
-
-    route.coordinates.forEach((point, index) => {
-        const label = route.stops[index] || `Stop ${index + 1}`;
-        const marker = L.marker(toLatLng(point), {
-            title: label
-        })
-            .bindPopup(label)
-            .addTo(map);
-
-        stopMarkers.push(marker);
-    });
-}
-
-function refreshMapSize() {
-    map.invalidateSize();
-}
-
-function fitToRoute(coordinates) {
-    refreshMapSize();
-
-    const latLngs = coordinates.map(toLatLng);
-    const bounds = L.latLngBounds(latLngs);
-
-    map.fitBounds(bounds, {
-        paddingTopLeft: [40, 80],
-        paddingBottomRight: [40, 190],
-        maxZoom: 13
-    });
 }
 
 function updateRouteSummary(routeSummary) {
     etaEl.textContent = formatDuration(routeSummary.duration);
     distanceEl.textContent = formatDistance(routeSummary.distance);
+}
+
+function setMapUrl(route) {
+    const mapUrl = followLocation && userLocation ? route.liveEmbed(userLocation) : route.embed;
+
+    mapFrame.src = mapUrl;
+    mapFrame.title = `${route.name} map`;
+    mapFallbackLink.href = route.google;
 }
 
 function loadRoute(routeKey) {
@@ -160,47 +102,23 @@ function loadRoute(routeKey) {
 
     destinationEl.textContent = currentRoute.destination;
     updateActiveDay(routeKey);
-    showStops(currentRoute);
-    drawRoute(currentRoute.coordinates);
     updateRouteSummary(getRouteSummary(currentRoute));
-    fitToRoute(currentRoute.coordinates);
-    window.setTimeout(refreshMapSize, 150);
-    setStatus(userLocation ? "Live GPS ready" : "Route ready");
+    setMapUrl(currentRoute);
+    setStatus(userLocation ? "Live GPS ready" : "Google Maps route ready");
 }
 
 function updateGps(position) {
     const lng = position.coords.longitude;
     const lat = position.coords.latitude;
-    const accuracy = position.coords.accuracy || 0;
     userLocation = [lng, lat];
-    const latLng = toLatLng(userLocation);
-
-    if (!gpsMarker) {
-        gpsMarker = L.marker(latLng, { title: "You are here" })
-            .bindPopup("You are here")
-            .addTo(map);
-    } else {
-        gpsMarker.setLatLng(latLng);
-    }
-
-    if (!gpsAccuracyCircle) {
-        gpsAccuracyCircle = L.circle(latLng, {
-            radius: accuracy,
-            color: "#e53935",
-            fillColor: "#e53935",
-            fillOpacity: 0.12,
-            weight: 1
-        }).addTo(map);
-    } else {
-        gpsAccuracyCircle.setLatLng(latLng).setRadius(accuracy);
-    }
-
-    if (followLocation) {
-        map.setView(latLng, Math.max(map.getZoom(), 13), { animate: true });
-    }
 
     if (currentRoute) {
         updateRouteSummary(getRouteSummary(currentRoute));
+
+        if (followLocation) {
+            setMapUrl(currentRoute);
+        }
+
         setStatus("Live GPS ready");
     }
 }
@@ -223,7 +141,8 @@ function startGps() {
 function openGoogleMaps() {
     if (!currentRoute) return;
 
-    window.open(currentRoute.google, "_blank", "noopener,noreferrer");
+    const url = followLocation && userLocation ? currentRoute.liveGoogle(userLocation) : currentRoute.google;
+    window.open(url, "_blank", "noopener,noreferrer");
 }
 
 function openRouteNote(routeKey) {
@@ -251,10 +170,10 @@ function closeRouteNote() {
 function toggleFollowLocation() {
     followLocation = !followLocation;
     followButton.classList.toggle("is-active", followLocation);
-    followButton.textContent = followLocation ? "Following My Location" : "Follow My Location";
+    followButton.textContent = followLocation ? "Using My Location" : "Use My Location";
 
-    if (followLocation && userLocation) {
-        map.setView(toLatLng(userLocation), Math.max(map.getZoom(), 13), { animate: true });
+    if (currentRoute) {
+        setMapUrl(currentRoute);
     }
 }
 
@@ -282,9 +201,5 @@ document.addEventListener("keydown", event => {
     }
 });
 
-window.addEventListener("resize", refreshMapSize);
-window.addEventListener("orientationchange", () => window.setTimeout(refreshMapSize, 250));
-
 loadRoute("tuesday");
-window.setTimeout(refreshMapSize, 150);
 startGps();

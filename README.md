@@ -1,11 +1,11 @@
 # Family Vacation Navigator
 
-A mobile-friendly OpenStreetMap navigation planner for the Tuesday, Thursday, and Saturday family vacation routes.
+A mobile-friendly Google Maps navigation planner for the Tuesday, Thursday, and Saturday family vacation routes.
 
 ## Features
 
-- OpenStreetMap/Leaflet map that works without Mapbox billing or card details.
-- Live GPS marker with high-accuracy geolocation.
+- Embedded Google Maps route view so the in-app map uses familiar Google routing instead of Mapbox or Leaflet tiles.
+- Live GPS-aware route updates when location access is enabled.
 - ETA and remaining-distance estimates based on the saved route path.
 - Route switching for Tuesday, Thursday, and Saturday.
 - Follow My Location toggle.

@@ -209,14 +209,6 @@ main {
     background: #1b5e20;
 }
 
-.leaflet-marker-icon {
-    cursor: pointer;
-}
-
-.leaflet-container {
-    font: inherit;
-}
-
 @media (max-width: 900px) {
     header {
         min-height: 62px;
@@ -465,4 +457,36 @@ main {
     .activities {
         margin-top: 14px;
     }
+}
+
+.google-map-shell {
+    overflow: hidden;
+    position: relative;
+}
+
+.google-map-shell iframe {
+    border: 0;
+    height: 100%;
+    inset: 0;
+    position: absolute;
+    width: 100%;
+}
+
+.map-fallback {
+    background: #ffffff;
+    border: 1px solid #d9e2ef;
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(39, 55, 77, 0.16);
+    color: #1565c0;
+    font-weight: 800;
+    padding: 10px 14px;
+    position: absolute;
+    right: 16px;
+    text-decoration: none;
+    top: 16px;
+    z-index: 5;
+}
+
+.map-fallback:hover {
+    background: #eef6ff;
 }
