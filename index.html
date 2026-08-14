@@ -2,15 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0d47a1">
+    <meta name="description" content="A mobile-friendly Google Maps trip planner for the family vacation routes on Tuesday, Thursday, and Saturday.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vacation Nav">
     <title>Family Vacation Navigator</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icon.svg">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<noscript>
+    <p class="noscript-note">
+        This planner needs JavaScript to switch routes and track location. You can still
+        <a href="https://www.google.com/maps/dir/?api=1&origin=Agric+Ikorodu&destination=Grailland+Iju&travelmode=driving">open the routes in Google Maps</a>.
+    </p>
+</noscript>
+
 <header>
-    <div class="logo">🚗 Family Vacation</div>
-    <div class="trip-status">
-        <span id="today">Tuesday</span>
+    <div class="logo"><span class="logo-mark" aria-hidden="true">🚗</span> Family Vacation</div>
+    <div class="trip-status" aria-live="polite">
+        <span class="today-day" id="today">Tuesday</span>
+        <span class="today-plan" id="todayPlan">Travel day</span>
     </div>
 </header>
 
@@ -108,7 +125,7 @@
     <main>
         <div id="map" class="google-map-shell">
             <iframe id="mapFrame" title="Google Maps route" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Grailland%20Iju&output=embed"></iframe>
-            <a id="mapFallbackLink" class="map-fallback" href="https://www.google.com/maps/dir/?api=1&origin=Agric%20Ikorodu&destination=Grailland%20Iju&travelmode=driving&waypoints=Berger%20Lagos%7CAkowonjo%20Lagos%7CIju%20Lagos" target="_blank" rel="noopener noreferrer">Open this route in Google Maps</a>
+            <a id="mapFallbackLink" class="map-fallback" href="https://www.google.com/maps/dir/?api=1&origin=Agric%20Ikorodu&destination=Grailland%20Iju&travelmode=driving&waypoints=Berger%20Lagos%7CAkowonjo%20Lagos%7CIju%20Lagos" target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
         </div>
 
         <section class="info" aria-live="polite">
@@ -119,20 +136,22 @@
                 </div>
                 <div>
                     <strong>Status</strong>
-                    <h2 id="status">Ready</h2>
+                    <h2 id="status">Planned route ready.</h2>
                 </div>
                 <div>
-                    <strong>ETA</strong>
+                    <strong>Est. ETA</strong>
                     <h2 id="eta">--</h2>
                 </div>
                 <div>
-                    <strong>Remaining Distance</strong>
+                    <strong>Est. Distance</strong>
                     <h2 id="distance">--</h2>
                 </div>
             </div>
 
+            <div class="route-strip" id="routeStrip" aria-label="Route stops"></div>
+
             <div class="actions">
-                <button type="button" id="followButton" class="secondary is-active">Using My Location</button>
+                <button type="button" id="followButton" class="secondary" aria-pressed="false">Use my location</button>
                 <button type="button" id="googleMapsButton" class="google">Open in Google Maps</button>
             </div>
         </section>
@@ -149,7 +168,6 @@
     </section>
 </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="routes.js"></script>
 <script src="app.js"></script>
 </body>

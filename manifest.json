@@ -1,0 +1,19 @@
+{
+    "name": "Family Vacation Navigator",
+    "short_name": "Vacation Nav",
+    "description": "Google Maps trip planner for the family vacation routes on Tuesday, Thursday, and Saturday.",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#0d47a1",
+    "theme_color": "#0d47a1",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}
