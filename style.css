@@ -170,3 +170,22 @@ height:340px;
 }
 
 }
+.info button{
+
+margin-top:15px;
+
+background:#2E7D32;
+
+}
+
+.info button:hover{
+
+background:#1B5E20;
+
+}
+
+.mapboxgl-marker{
+
+cursor:pointer;
+
+}
