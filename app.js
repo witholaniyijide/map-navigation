@@ -26,12 +26,18 @@ const DAY_PLAN = {
     Saturday: "Return home"
 };
 
+const STORAGE_KEY = "vacation-nav:last-route";
+
 let currentRouteKey;
 let currentRoute;
 let userLocation = null;
 let followLocation = false;
 let watchId = null;
 let lastFocusedElement = null;
+let roadSummaryActive = false;
+let lastRoadFetch = 0;
+
+const roadSummaryCache = new Map();
 
 const mapFrame = document.getElementById("mapFrame");
 const mapFallbackLink = document.getElementById("mapFallbackLink");
@@ -95,12 +101,14 @@ function getRouteDistance(coordinates) {
     }, 0);
 }
 
+function getPathForRoute(route) {
+    return followLocation && userLocation && route.coordinates.length
+        ? [userLocation, ...route.coordinates.slice(1)]
+        : route.coordinates;
+}
+
 function getRouteSummary(route) {
-    const path =
-        userLocation && route.coordinates.length
-            ? [userLocation, ...route.coordinates.slice(1)]
-            : route.coordinates;
-    const distance = getRouteDistance(path);
+    const distance = getRouteDistance(getPathForRoute(route));
     const metersPerSecond = (AVERAGE_CITY_SPEED_KPH * 1000) / 3600;
 
     return {
@@ -156,12 +164,54 @@ function setMapUrl(route) {
         followLocation && userLocation ? route.liveGoogle(userLocation) : route.google;
 }
 
+function applyRoadSummary(summary, routeKey, usingLocation) {
+    // Ignore a late result if the user switched routes or toggled location.
+    if (routeKey !== currentRouteKey) return;
+    if (usingLocation !== (followLocation && Boolean(userLocation))) return;
+
+    updateRouteSummary({ distance: summary.distance, duration: summary.duration });
+    roadSummaryActive = true;
+}
+
+async function refreshRoadSummary(route) {
+    const routeKey = currentRouteKey;
+    const usingLocation = followLocation && Boolean(userLocation);
+    const cacheKey = usingLocation ? null : routeKey;
+
+    if (cacheKey && roadSummaryCache.has(cacheKey)) {
+        applyRoadSummary(roadSummaryCache.get(cacheKey), routeKey, usingLocation);
+        return;
+    }
+
+    try {
+        const summary = await fetchRoadSummary(getPathForRoute(route));
+        if (cacheKey) roadSummaryCache.set(cacheKey, summary);
+        applyRoadSummary(summary, routeKey, usingLocation);
+    } catch (error) {
+        // Best-effort upgrade: keep the straight-line estimate on any failure.
+    }
+}
+
+function maybeRefreshRoad(route) {
+    // Throttle the live-follow refresh so GPS ticks don't hammer the router.
+    const now = Date.now();
+    if (now - lastRoadFetch < 25000) return;
+
+    lastRoadFetch = now;
+    refreshRoadSummary(route);
+}
+
 function loadRoute(routeKey, scrollToMap = false) {
     const route = routes[routeKey];
     if (!route) return;
 
     currentRouteKey = routeKey;
     currentRoute = route;
+    saveRoute(routeKey);
+
+    // Show the straight-line estimate immediately, then upgrade to road data.
+    roadSummaryActive = false;
+    lastRoadFetch = Date.now();
 
     destinationEl.textContent = route.destination;
     updateActiveDay(routeKey);
@@ -171,6 +221,8 @@ function loadRoute(routeKey, scrollToMap = false) {
     setStatus(
         followLocation && userLocation ? "Live location active." : "Planned route ready."
     );
+
+    refreshRoadSummary(route);
 
     if (scrollToMap && mobileQuery.matches) {
         document.querySelector("main").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -188,10 +240,13 @@ function onGpsSuccess(position) {
 
     if (!currentRoute) return;
 
-    updateRouteSummary(getRouteSummary(currentRoute));
-
     if (followLocation) {
         setMapUrl(currentRoute);
+        // Live straight-line estimate until the throttled road refresh lands.
+        if (!roadSummaryActive) {
+            updateRouteSummary(getRouteSummary(currentRoute));
+        }
+        maybeRefreshRoad(currentRoute);
     }
 
     setStatus("Live location active.");
@@ -214,6 +269,8 @@ function startLocation() {
     }
 
     followLocation = true;
+    roadSummaryActive = false;
+    lastRoadFetch = 0;
     updateFollowButton();
     setStatus("Getting your location…");
 
@@ -235,9 +292,12 @@ function stopLocation() {
     updateFollowButton();
 
     if (currentRoute) {
+        roadSummaryActive = false;
+        lastRoadFetch = Date.now();
         updateRouteSummary(getRouteSummary(currentRoute));
         setMapUrl(currentRoute);
         setStatus("Planned route ready.");
+        refreshRoadSummary(currentRoute);
     }
 }
 
@@ -299,7 +359,28 @@ function updateTodayLabel() {
     if (todayPlanEl) todayPlanEl.textContent = DAY_PLAN[weekday] || "Trip starts Tuesday";
 }
 
+function saveRoute(routeKey) {
+    try {
+        localStorage.setItem(STORAGE_KEY, routeKey);
+    } catch (error) {
+        /* Storage can be unavailable (private mode); persistence is optional. */
+    }
+}
+
+function readSavedRoute() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved && routes[saved] ? saved : null;
+    } catch (error) {
+        return null;
+    }
+}
+
 function pickInitialRoute() {
+    // A route the traveller explicitly picked last time wins over the default.
+    const saved = readSavedRoute();
+    if (saved) return saved;
+
     const weekday = currentWeekday();
 
     if (DAY_TO_ROUTE[weekday]) return DAY_TO_ROUTE[weekday];

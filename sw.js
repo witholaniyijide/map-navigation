@@ -1,9 +1,10 @@
-const CACHE = "vacation-nav-v1";
+const CACHE = "vacation-nav-v2";
 const APP_SHELL = [
     "./",
     "./index.html",
     "./style.css",
     "./routes.js",
+    "./routing.js",
     "./app.js",
     "./manifest.json",
     "./icon.svg"

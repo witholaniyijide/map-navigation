@@ -7,7 +7,7 @@ A mobile-friendly Google Maps navigation planner for the Tuesday, Thursday, and 
 - Embedded Google Maps route view so the in-app map uses familiar Google routing.
 - Auto-selects the route for the current weekday and shows the day's plan (travel, rest, or resort day).
 - Opt-in live location: tap **Use my location** to update ETA/distance and hand off live directions to Google Maps.
-- Estimated ETA and remaining distance based on the saved route path.
+- Real road distance and ETA via OpenRouteService/OSRM, with a straight-line estimate as an automatic offline fallback.
 - Route switching for Tuesday, Thursday, and Saturday, with a scrollable stop-by-stop strip.
 - Per-route "Note" cards with turn-by-turn checkpoints.
 - Installable PWA with an offline app shell — the interface and route notes stay available even with spotty signal (the live map still needs a connection).
@@ -33,6 +33,7 @@ system.
 | `index.html` | Markup for the header, route picker, map pane, info panel, and note modal. |
 | `style.css` | Theme tokens, responsive layout, and component styles. |
 | `routes.js` | Route data plus the Google Maps embed/directions URL builders. |
+| `routing.js` | Road distance/ETA lookup (OSRM by default, OpenRouteService when a key is set). |
 | `app.js` | Route loading, distance/ETA math, geolocation, the note modal, and service-worker registration. |
 | `manifest.json` / `icon.svg` | PWA metadata and app icon. |
 | `sw.js` | Service worker that caches the app shell for offline use. |
