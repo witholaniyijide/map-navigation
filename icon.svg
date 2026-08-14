@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Family Vacation Navigator">
+    <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#1565c0"/>
+            <stop offset="1" stop-color="#0d47a1"/>
+        </linearGradient>
+    </defs>
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <path d="M256 116c-63 0-114 51-114 114 0 80 99 174 108 182a9 9 0 0 0 12 0c9-8 108-102 108-182 0-63-51-114-114-114z" fill="#ffffff"/>
+    <circle cx="256" cy="226" r="47" fill="#1565c0"/>
+</svg>

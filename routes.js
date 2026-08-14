@@ -41,8 +41,6 @@ const routes = {
         liveGoogle(userLocation) {
             return buildLiveGoogle(this, userLocation);
         },
-        center: [3.325, 6.647],
-        zoom: 10.5,
         stops: ["Agric", "Berger", "Akowonjo", "Iju", "Grailland"],
         noteTitle: "From Agric to Grailland",
         noteSteps: [
@@ -72,8 +70,6 @@ const routes = {
         liveGoogle(userLocation) {
             return buildLiveGoogle(this, userLocation);
         },
-        center: [3.05, 6.50],
-        zoom: 9,
         stops: ["Grailland", "Agege", "Egbeda", "LASU-Isheri Axis", "Lagos-Badagry Expressway", "Aradagun", "Whimspring Palms"],
         noteTitle: "From Grailland to Whimspring Palms",
         noteSteps: [
@@ -106,8 +102,6 @@ const routes = {
         liveGoogle(userLocation) {
             return buildLiveGoogle(this, userLocation);
         },
-        center: [3.35, 6.56],
-        zoom: 9,
         stops: ["Whimspring Palms", "Lagos-Badagry Expressway", "Mile 2", "Oshodi", "Ikorodu Road", "Mile 12", "Agric"],
         noteTitle: "From Whimspring Palms back to Agric (Home)",
         noteSteps: [
