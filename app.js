@@ -1,206 +1,204 @@
-mapboxgl.accessToken = "PASTE_YOUR_MAPBOX_ACCESS_TOKEN_HERE";
+const AVERAGE_CITY_SPEED_KPH = 35;
 
-const map = new mapboxgl.Map({
-
-    container: "map",
-
-    style: "mapbox://styles/mapbox/streets-v12",
-
-    center: [3.38,6.60],
-
-    zoom: 10
-
-});
-
-map.addControl(new mapboxgl.NavigationControl());
-
-let gpsMarker;
-
+let currentRouteKey;
 let currentRoute;
+let userLocation;
+let followLocation = true;
 
-let currentSource;
+const mapFrame = document.getElementById("mapFrame");
+const mapFallbackLink = document.getElementById("mapFallbackLink");
+const destinationEl = document.getElementById("destination");
+const statusEl = document.getElementById("status");
+const etaEl = document.getElementById("eta");
+const distanceEl = document.getElementById("distance");
+const googleButton = document.getElementById("googleMapsButton");
+const followButton = document.getElementById("followButton");
+const dayCards = document.querySelectorAll(".day[data-route]");
+const noteButtons = document.querySelectorAll(".note-button[data-note-route]");
+const routeNoteModal = document.getElementById("routeNoteModal");
+const closeNoteButton = document.getElementById("closeNoteButton");
+const noteTitleEl = document.getElementById("noteTitle");
+const noteStepsEl = document.getElementById("noteSteps");
 
-navigator.geolocation.watchPosition(position=>{
-
-    const lng = position.coords.longitude;
-
-    const lat = position.coords.latitude;
-
-    if(!gpsMarker){
-
-        gpsMarker = new mapboxgl.Marker({
-
-            color:"#e53935"
-
-        })
-
-        .setLngLat([lng,lat])
-
-        .addTo(map);
-
+function formatDistance(meters = 0) {
+    if (meters >= 1000) {
+        return `${(meters / 1000).toFixed(1)} km`;
     }
 
-    else{
-
-        gpsMarker.setLngLat([lng,lat]);
-
-    }
-
-});
-
-function loadRoute(route){
-
-    currentRoute = routes[route];
-
-    document.getElementById("destination").innerHTML =
-        currentRoute.destination;
-
-    document.getElementById("status").innerHTML =
-        "Navigation Ready";
-
-    map.flyTo({
-
-        center:currentRoute.center,
-
-        zoom:currentRoute.zoom,
-
-        speed:0.8
-
-    });
-
-    drawRoute(currentRoute.coordinates);
-
+    return `${Math.round(meters)} m`;
 }
-// ---------- ROUTE DRAWING ----------
 
-function drawRoute(coordinates) {
+function formatDuration(seconds = 0) {
+    const minutes = Math.max(1, Math.round(seconds / 60));
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
 
-    if (map.getLayer("route")) {
-        map.removeLayer("route");
+    if (!hours) {
+        return `${minutes} min`;
     }
 
-    if (map.getSource("route")) {
-        map.removeSource("route");
-    }
+    return `${hours} hr ${mins ? `${mins} min` : ""}`.trim();
+}
 
-    const geojson = {
+function distanceBetweenPoints(start, end) {
+    const [startLng, startLat] = start;
+    const [endLng, endLat] = end;
+    const earthRadius = 6371000;
+    const startPhi = startLat * Math.PI / 180;
+    const endPhi = endLat * Math.PI / 180;
+    const deltaPhi = (endLat - startLat) * Math.PI / 180;
+    const deltaLambda = (endLng - startLng) * Math.PI / 180;
+    const a = Math.sin(deltaPhi / 2) ** 2 + Math.cos(startPhi) * Math.cos(endPhi) * Math.sin(deltaLambda / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        type: "Feature",
+    return earthRadius * c;
+}
 
-        geometry: {
+function getRouteDistance(coordinates) {
+    return coordinates.slice(1).reduce((total, point, index) => {
+        return total + distanceBetweenPoints(coordinates[index], point);
+    }, 0);
+}
 
-            type: "LineString",
+function getRouteSummary(route) {
+    const distance = getRouteDistance(userLocation ? [userLocation, ...route.coordinates.slice(1)] : route.coordinates);
+    const metersPerSecond = (AVERAGE_CITY_SPEED_KPH * 1000) / 3600;
 
-            coordinates: coordinates
-
-        }
-
+    return {
+        distance,
+        duration: distance / metersPerSecond
     };
+}
 
-    map.addSource("route", {
+function setStatus(message) {
+    statusEl.textContent = message;
+}
 
-        type: "geojson",
-
-        data: geojson
-
+function updateActiveDay(routeKey) {
+    dayCards.forEach(card => {
+        card.classList.toggle("active", card.dataset.route === routeKey);
     });
 
-    map.addLayer({
+    document.getElementById("today").textContent = routes[routeKey].day;
+}
 
-        id: "route",
+function updateRouteSummary(routeSummary) {
+    etaEl.textContent = formatDuration(routeSummary.duration);
+    distanceEl.textContent = formatDistance(routeSummary.distance);
+}
 
-        type: "line",
+function setMapUrl(route) {
+    const mapUrl = followLocation && userLocation ? route.liveEmbed(userLocation) : route.embed;
 
-        source: "route",
+    mapFrame.src = mapUrl;
+    mapFrame.title = `${route.name} map`;
+    mapFallbackLink.href = route.google;
+}
 
-        layout: {
+function loadRoute(routeKey) {
+    currentRouteKey = routeKey;
+    currentRoute = routes[routeKey];
 
-            "line-join": "round",
+    destinationEl.textContent = currentRoute.destination;
+    updateActiveDay(routeKey);
+    updateRouteSummary(getRouteSummary(currentRoute));
+    setMapUrl(currentRoute);
+    setStatus(userLocation ? "Live GPS ready" : "Google Maps route ready");
+}
 
-            "line-cap": "round"
+function updateGps(position) {
+    const lng = position.coords.longitude;
+    const lat = position.coords.latitude;
+    userLocation = [lng, lat];
 
-        },
+    if (currentRoute) {
+        updateRouteSummary(getRouteSummary(currentRoute));
 
-        paint: {
-
-            "line-color": "#1565C0",
-
-            "line-width": 6,
-
-            "line-opacity": 0.85
-
+        if (followLocation) {
+            setMapUrl(currentRoute);
         }
 
+        setStatus("Live GPS ready");
+    }
+}
+
+function startGps() {
+    if (!navigator.geolocation) {
+        setStatus("GPS is not supported on this device.");
+        return;
+    }
+
+    navigator.geolocation.watchPosition(updateGps, () => {
+        setStatus("Enable location access for live GPS.");
+    }, {
+        enableHighAccuracy: true,
+        maximumAge: 15000,
+        timeout: 12000
+    });
+}
+
+function openGoogleMaps() {
+    if (!currentRoute) return;
+
+    const url = followLocation && userLocation ? currentRoute.liveGoogle(userLocation) : currentRoute.google;
+    window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function openRouteNote(routeKey) {
+    const route = routes[routeKey];
+
+    noteTitleEl.textContent = route.noteTitle || route.name;
+    noteStepsEl.innerHTML = "";
+
+    route.noteSteps.forEach(step => {
+        const item = document.createElement("li");
+        item.textContent = step;
+        noteStepsEl.appendChild(item);
     });
 
-    showStops(coordinates);
-
+    routeNoteModal.classList.add("is-open");
+    routeNoteModal.setAttribute("aria-hidden", "false");
+    closeNoteButton.focus();
 }
 
-
-
-// ---------- STOP MARKERS ----------
-
-let stopMarkers = [];
-
-function showStops(coords){
-
-    stopMarkers.forEach(marker => marker.remove());
-
-    stopMarkers = [];
-
-    coords.forEach(point=>{
-
-        const marker = new mapboxgl.Marker({
-
-            color:"#2E7D32"
-
-        })
-
-        .setLngLat(point)
-
-        .addTo(map);
-
-        stopMarkers.push(marker);
-
-    });
-
+function closeRouteNote() {
+    routeNoteModal.classList.remove("is-open");
+    routeNoteModal.setAttribute("aria-hidden", "true");
 }
 
+function toggleFollowLocation() {
+    followLocation = !followLocation;
+    followButton.classList.toggle("is-active", followLocation);
+    followButton.textContent = followLocation ? "Using My Location" : "Use My Location";
 
-
-// ---------- GOOGLE MAPS ----------
-
-function openGoogleMaps(){
-
-    if(!currentRoute) return;
-
-    window.open(currentRoute.google,"_blank");
-
+    if (currentRoute) {
+        setMapUrl(currentRoute);
+    }
 }
 
+googleButton.addEventListener("click", openGoogleMaps);
+followButton.addEventListener("click", toggleFollowLocation);
 
-
-// ---------- ADD BUTTON ----------
-
-const info = document.querySelector(".info");
-
-const button = document.createElement("button");
-
-button.innerHTML = "Open in Google Maps";
-
-button.style.marginTop = "15px";
-
-button.onclick = openGoogleMaps;
-
-info.appendChild(button);
-
-
-
-// ---------- LOAD DEFAULT ROUTE ----------
-
-map.on("load",()=>{
-
-    loadRoute("tuesday");
-
+dayCards.forEach(card => {
+    card.querySelector(".route-button").addEventListener("click", () => loadRoute(card.dataset.route));
 });
+
+noteButtons.forEach(button => {
+    button.addEventListener("click", () => openRouteNote(button.dataset.noteRoute));
+});
+
+closeNoteButton.addEventListener("click", closeRouteNote);
+routeNoteModal.addEventListener("click", event => {
+    if (event.target.hasAttribute("data-close-note")) {
+        closeRouteNote();
+    }
+});
+
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && routeNoteModal.classList.contains("is-open")) {
+        closeRouteNote();
+    }
+});
+
+loadRoute("tuesday");
+startGps();
