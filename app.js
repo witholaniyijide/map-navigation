@@ -78,6 +78,7 @@ function updateActiveDay(routeKey) {
     dayCards.forEach(card => {
         card.classList.toggle("active", card.dataset.route === routeKey);
     });
+}
 
     document.getElementById("today").textContent = routes[routeKey].day;
 }
