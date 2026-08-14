@@ -78,6 +78,21 @@ const page = await context.newPage();
 const pageErrors = [];
 page.on("pageerror", error => pageErrors.push(error.message));
 
+// Deterministic road routing: mock the OSRM endpoint so the test never
+// depends on a live routing server.
+const ROAD_DISTANCE_M = 50000;
+const ROAD_DURATION_S = 3600;
+await page.route("**/route/v1/driving/**", route =>
+    route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+            code: "Ok",
+            routes: [{ distance: ROAD_DISTANCE_M, duration: ROAD_DURATION_S }]
+        })
+    })
+);
+
 try {
     await page.goto(BASE, { waitUntil: "load" });
     await page.waitForFunction(
@@ -90,6 +105,13 @@ try {
 
     // The whole point of the fix: the script must parse and run.
     assert("no uncaught page errors", pageErrors.length === 0, pageErrors.join(" | "));
+
+    // The async road summary should upgrade the display to the mocked value.
+    await page.waitForFunction(
+        () => document.querySelector("#distance")?.textContent?.includes("50.0 km"),
+        { timeout: 5000 }
+    );
+    assert("road summary overrides estimate", true, (await page.textContent("#distance"))?.trim());
 
     const destination = (await page.textContent("#destination"))?.trim();
     assert("destination populated", Boolean(destination), destination);
@@ -144,6 +166,27 @@ try {
     await page.click("#followButton");
     await page.waitForTimeout(300);
     assert("location toggle does not crash", pageErrors.length === 0, (await page.textContent("#status"))?.trim());
+
+    // Graceful fallback: when routing is unavailable, the estimate still shows.
+    const offlinePage = await context.newPage();
+    const offlineErrors = [];
+    offlinePage.on("pageerror", error => offlineErrors.push(error.message));
+    await offlinePage.route("**/route/v1/driving/**", route => route.abort());
+    await offlinePage.goto(BASE, { waitUntil: "load" });
+    await offlinePage.waitForFunction(
+        () => {
+            const distance = document.querySelector("#distance");
+            return distance && distance.textContent && distance.textContent !== "--";
+        },
+        { timeout: 8000 }
+    );
+    const offlineDistance = (await offlinePage.textContent("#distance"))?.trim();
+    assert(
+        "estimate shown when routing unavailable",
+        offlineErrors.length === 0 && offlineDistance && offlineDistance !== "--" && !/50\.0 km/.test(offlineDistance),
+        offlineDistance
+    );
+    await offlinePage.close();
 } finally {
     await browser.close();
     server.close();
