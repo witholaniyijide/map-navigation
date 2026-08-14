@@ -17,10 +17,8 @@ function buildGoogleDirections(origin, destination, waypoints = []) {
     return `https://www.google.com/maps/dir/?${params}`;
 }
 
-function buildGoogleEmbed(origin, destination, waypoints = []) {
-    const destinationPath = [destination, ...waypoints].map(encodePlace).join("+to:");
-
-    return `https://maps.google.com/maps?saddr=${encodePlace(origin)}&daddr=${destinationPath}&output=embed`;
+function buildGoogleMapEmbed(query) {
+    return `https://www.google.com/maps?q=${encodePlace(query)}&output=embed`;
 }
 
 function buildLiveGoogle(route, userLocation) {
@@ -28,13 +26,6 @@ function buildLiveGoogle(route, userLocation) {
     const origin = `${lat},${lng}`;
 
     return buildGoogleDirections(origin, route.destinationQuery, route.waypointQueries);
-}
-
-function buildLiveGoogleEmbed(route, userLocation) {
-    const [lng, lat] = userLocation;
-    const origin = `${lat},${lng}`;
-
-    return buildGoogleEmbed(origin, route.destinationQuery, route.waypointQueries);
 }
 
 const routes = {
@@ -46,12 +37,9 @@ const routes = {
         destinationQuery: "Grailland Iju",
         waypointQueries: ["Berger Lagos", "Akowonjo Lagos", "Iju Lagos"],
         google: buildGoogleDirections("Agric Ikorodu", "Grailland Iju", ["Berger Lagos", "Akowonjo Lagos", "Iju Lagos"]),
-        embed: buildGoogleEmbed("Agric Ikorodu", "Grailland Iju", ["Berger Lagos", "Akowonjo Lagos", "Iju Lagos"]),
+        embed: buildGoogleMapEmbed("Grailland Iju"),
         liveGoogle(userLocation) {
             return buildLiveGoogle(this, userLocation);
-        },
-        liveEmbed(userLocation) {
-            return buildLiveGoogleEmbed(this, userLocation);
         },
         center: [3.325, 6.647],
         zoom: 10.5,
@@ -80,12 +68,9 @@ const routes = {
         destinationQuery: "Whispering Palms Badagry",
         waypointQueries: ["Agege Lagos", "Egbeda Lagos", "LASU Isheri Lagos", "Lagos-Badagry Expressway", "Aradagun"],
         google: buildGoogleDirections("Grailland Iju", "Whispering Palms Badagry", ["Agege Lagos", "Egbeda Lagos", "LASU Isheri Lagos", "Lagos-Badagry Expressway", "Aradagun"]),
-        embed: buildGoogleEmbed("Grailland Iju", "Whispering Palms Badagry", ["Agege Lagos", "Egbeda Lagos", "LASU Isheri Lagos", "Lagos-Badagry Expressway", "Aradagun"]),
+        embed: buildGoogleMapEmbed("Whispering Palms Badagry"),
         liveGoogle(userLocation) {
             return buildLiveGoogle(this, userLocation);
-        },
-        liveEmbed(userLocation) {
-            return buildLiveGoogleEmbed(this, userLocation);
         },
         center: [3.05, 6.50],
         zoom: 9,
@@ -117,12 +102,9 @@ const routes = {
         destinationQuery: "Agric Ikorodu",
         waypointQueries: ["Mile 2 Lagos", "Oshodi Lagos", "Ikorodu Road Lagos", "Mile 12 Lagos"],
         google: buildGoogleDirections("Whispering Palms Badagry", "Agric Ikorodu", ["Mile 2 Lagos", "Oshodi Lagos", "Ikorodu Road Lagos", "Mile 12 Lagos"]),
-        embed: buildGoogleEmbed("Whispering Palms Badagry", "Agric Ikorodu", ["Mile 2 Lagos", "Oshodi Lagos", "Ikorodu Road Lagos", "Mile 12 Lagos"]),
+        embed: buildGoogleMapEmbed("Agric Ikorodu"),
         liveGoogle(userLocation) {
             return buildLiveGoogle(this, userLocation);
-        },
-        liveEmbed(userLocation) {
-            return buildLiveGoogleEmbed(this, userLocation);
         },
         center: [3.35, 6.56],
         zoom: 9,

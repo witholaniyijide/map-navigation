@@ -89,11 +89,9 @@ function updateRouteSummary(routeSummary) {
 }
 
 function setMapUrl(route) {
-    const mapUrl = followLocation && userLocation ? route.liveEmbed(userLocation) : route.embed;
-
-    mapFrame.src = mapUrl;
+    mapFrame.src = route.embed;
     mapFrame.title = `${route.name} map`;
-    mapFallbackLink.href = route.google;
+    mapFallbackLink.href = followLocation && userLocation ? route.liveGoogle(userLocation) : route.google;
 }
 
 function loadRoute(routeKey) {
@@ -181,7 +179,11 @@ googleButton.addEventListener("click", openGoogleMaps);
 followButton.addEventListener("click", toggleFollowLocation);
 
 dayCards.forEach(card => {
-    card.querySelector(".route-button").addEventListener("click", () => loadRoute(card.dataset.route));
+    const routeButton = card.querySelector(".route-button") || card.querySelector("button");
+
+    if (routeButton) {
+        routeButton.addEventListener("click", () => loadRoute(card.dataset.route));
+    }
 });
 
 noteButtons.forEach(button => {
