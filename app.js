@@ -1,19 +1,19 @@
-const MAPBOX_TOKEN_PLACEHOLDER = "PASTE_YOUR_MAPBOX_ACCESS_TOKEN_HERE";
-const mapboxToken = window.MAPBOX_ACCESS_TOKEN || MAPBOX_TOKEN_PLACEHOLDER;
+const AVERAGE_CITY_SPEED_KPH = 35;
 
-mapboxgl.accessToken = mapboxToken;
+const map = L.map("map", {
+    zoomControl: false
+}).setView([6.60, 3.38], 10);
 
-const hasMapboxToken = Boolean(mapboxToken && mapboxToken !== MAPBOX_TOKEN_PLACEHOLDER);
-const map = new mapboxgl.Map({
-    container: "map",
-    style: "mapbox://styles/mapbox/streets-v12",
-    center: [3.38, 6.60],
-    zoom: 10
-});
+L.control.zoom({ position: "topright" }).addTo(map);
 
-map.addControl(new mapboxgl.NavigationControl(), "top-right");
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
 
 let gpsMarker;
+let gpsAccuracyCircle;
+let routeLine;
 let currentRouteKey;
 let currentRoute;
 let userLocation;
@@ -27,6 +27,10 @@ const distanceEl = document.getElementById("distance");
 const googleButton = document.getElementById("googleMapsButton");
 const followButton = document.getElementById("followButton");
 const dayCards = document.querySelectorAll(".day[data-route]");
+
+function toLatLng([lng, lat]) {
+    return [lat, lng];
+}
 
 function formatDistance(meters = 0) {
     if (meters >= 1000) {
@@ -48,13 +52,38 @@ function formatDuration(seconds = 0) {
     return `${hours} hr ${mins ? `${mins} min` : ""}`.trim();
 }
 
-function setStatus(message) {
-    statusEl.textContent = message;
+function distanceBetweenPoints(start, end) {
+    const [startLng, startLat] = start;
+    const [endLng, endLat] = end;
+    const earthRadius = 6371000;
+    const startPhi = startLat * Math.PI / 180;
+    const endPhi = endLat * Math.PI / 180;
+    const deltaPhi = (endLat - startLat) * Math.PI / 180;
+    const deltaLambda = (endLng - startLng) * Math.PI / 180;
+    const a = Math.sin(deltaPhi / 2) ** 2 + Math.cos(startPhi) * Math.cos(endPhi) * Math.sin(deltaLambda / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return earthRadius * c;
 }
 
-function setMetricDefaults() {
-    etaEl.textContent = "--";
-    distanceEl.textContent = "--";
+function getRouteDistance(coordinates) {
+    return coordinates.slice(1).reduce((total, point, index) => {
+        return total + distanceBetweenPoints(coordinates[index], point);
+    }, 0);
+}
+
+function getRouteSummary(route) {
+    const distance = getRouteDistance(userLocation ? [userLocation, ...route.coordinates.slice(1)] : route.coordinates);
+    const metersPerSecond = (AVERAGE_CITY_SPEED_KPH * 1000) / 3600;
+
+    return {
+        distance,
+        duration: distance / metersPerSecond
+    };
+}
+
+function setStatus(message) {
+    statusEl.textContent = message;
 }
 
 function updateActiveDay(routeKey) {
@@ -65,75 +94,20 @@ function updateActiveDay(routeKey) {
     document.getElementById("today").textContent = routes[routeKey].day;
 }
 
-function buildDirectionsUrl(route, origin) {
-    const coordinates = [origin || route.coordinates[0], ...route.coordinates.slice(1)]
-        .map(point => point.join(","))
-        .join(";");
-
-    const params = new URLSearchParams({
-        access_token: mapboxToken,
-        alternatives: "false",
-        geometries: "geojson",
-        overview: "full",
-        steps: "false"
-    });
-
-    return `https://api.mapbox.com/directions/v5/mapbox/driving-traffic/${coordinates}?${params}`;
-}
-
-async function getRoadRoute(route, origin) {
-    if (!hasMapboxToken) {
-        throw new Error("Add your Mapbox access token in app.js or set window.MAPBOX_ACCESS_TOKEN.");
-    }
-
-    const response = await fetch(buildDirectionsUrl(route, origin));
-
-    if (!response.ok) {
-        throw new Error("Mapbox Directions API request failed.");
-    }
-
-    const data = await response.json();
-
-    if (!data.routes || !data.routes.length) {
-        throw new Error("No drivable route was returned by Mapbox.");
-    }
-
-    return data.routes[0];
-}
-
 function drawRoute(coordinates) {
-    const geojson = {
-        type: "Feature",
-        geometry: {
-            type: "LineString",
-            coordinates
-        }
-    };
+    const latLngs = coordinates.map(toLatLng);
 
-    if (map.getSource("route")) {
-        map.getSource("route").setData(geojson);
+    if (routeLine) {
+        routeLine.setLatLngs(latLngs);
         return;
     }
 
-    map.addSource("route", {
-        type: "geojson",
-        data: geojson
-    });
-
-    map.addLayer({
-        id: "route",
-        type: "line",
-        source: "route",
-        layout: {
-            "line-join": "round",
-            "line-cap": "round"
-        },
-        paint: {
-            "line-color": "#1565C0",
-            "line-width": 6,
-            "line-opacity": 0.85
-        }
-    });
+    routeLine = L.polyline(latLngs, {
+        color: "#1565C0",
+        weight: 6,
+        opacity: 0.85,
+        lineJoin: "round"
+    }).addTo(map);
 }
 
 function showStops(route) {
@@ -142,9 +116,10 @@ function showStops(route) {
 
     route.coordinates.forEach((point, index) => {
         const label = route.stops[index] || `Stop ${index + 1}`;
-        const marker = new mapboxgl.Marker({ color: index === route.coordinates.length - 1 ? "#d84315" : "#2E7D32" })
-            .setLngLat(point)
-            .setPopup(new mapboxgl.Popup({ offset: 24 }).setText(label))
+        const marker = L.marker(toLatLng(point), {
+            title: label
+        })
+            .bindPopup(label)
             .addTo(map);
 
         stopMarkers.push(marker);
@@ -152,12 +127,13 @@ function showStops(route) {
 }
 
 function fitToRoute(coordinates) {
-    const bounds = coordinates.reduce((mapBounds, coord) => mapBounds.extend(coord), new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+    const latLngs = coordinates.map(toLatLng);
+    const bounds = L.latLngBounds(latLngs);
 
     map.fitBounds(bounds, {
-        padding: { top: 90, right: 50, bottom: 190, left: 50 },
-        maxZoom: 13,
-        duration: 900
+        paddingTopLeft: [40, 80],
+        paddingBottomRight: [40, 190],
+        maxZoom: 13
     });
 }
 
@@ -166,49 +142,53 @@ function updateRouteSummary(routeSummary) {
     distanceEl.textContent = formatDistance(routeSummary.distance);
 }
 
-async function loadRoute(routeKey) {
+function loadRoute(routeKey) {
     currentRouteKey = routeKey;
     currentRoute = routes[routeKey];
 
     destinationEl.textContent = currentRoute.destination;
-    setMetricDefaults();
     updateActiveDay(routeKey);
     showStops(currentRoute);
-    setStatus("Getting road route...");
-
-    try {
-        const roadRoute = await getRoadRoute(currentRoute, userLocation);
-        drawRoute(roadRoute.geometry.coordinates);
-        updateRouteSummary(roadRoute);
-        fitToRoute(roadRoute.geometry.coordinates);
-        setStatus(userLocation ? "Live navigation ready" : "Route ready");
-    } catch (error) {
-        drawRoute(currentRoute.coordinates);
-        fitToRoute(currentRoute.coordinates);
-        setStatus(error.message);
-    }
+    drawRoute(currentRoute.coordinates);
+    updateRouteSummary(getRouteSummary(currentRoute));
+    fitToRoute(currentRoute.coordinates);
+    setStatus(userLocation ? "Live GPS ready" : "Route ready");
 }
 
 function updateGps(position) {
     const lng = position.coords.longitude;
     const lat = position.coords.latitude;
+    const accuracy = position.coords.accuracy || 0;
     userLocation = [lng, lat];
+    const latLng = toLatLng(userLocation);
 
     if (!gpsMarker) {
-        gpsMarker = new mapboxgl.Marker({ color: "#e53935" })
-            .setLngLat(userLocation)
-            .setPopup(new mapboxgl.Popup({ offset: 24 }).setText("You are here"))
+        gpsMarker = L.marker(latLng, { title: "You are here" })
+            .bindPopup("You are here")
             .addTo(map);
     } else {
-        gpsMarker.setLngLat(userLocation);
+        gpsMarker.setLatLng(latLng);
+    }
+
+    if (!gpsAccuracyCircle) {
+        gpsAccuracyCircle = L.circle(latLng, {
+            radius: accuracy,
+            color: "#e53935",
+            fillColor: "#e53935",
+            fillOpacity: 0.12,
+            weight: 1
+        }).addTo(map);
+    } else {
+        gpsAccuracyCircle.setLatLng(latLng).setRadius(accuracy);
     }
 
     if (followLocation) {
-        map.easeTo({ center: userLocation, zoom: Math.max(map.getZoom(), 13), duration: 800 });
+        map.setView(latLng, Math.max(map.getZoom(), 13), { animate: true });
     }
 
-    if (currentRouteKey) {
-        loadRoute(currentRouteKey);
+    if (currentRoute) {
+        updateRouteSummary(getRouteSummary(currentRoute));
+        setStatus("Live GPS ready");
     }
 }
 
@@ -239,7 +219,7 @@ function toggleFollowLocation() {
     followButton.textContent = followLocation ? "Following My Location" : "Follow My Location";
 
     if (followLocation && userLocation) {
-        map.easeTo({ center: userLocation, zoom: Math.max(map.getZoom(), 13), duration: 800 });
+        map.setView(toLatLng(userLocation), Math.max(map.getZoom(), 13), { animate: true });
     }
 }
 
@@ -250,7 +230,5 @@ dayCards.forEach(card => {
     card.querySelector("button").addEventListener("click", () => loadRoute(card.dataset.route));
 });
 
-map.on("load", () => {
-    loadRoute("tuesday");
-    startGps();
-});
+loadRoute("tuesday");
+startGps();

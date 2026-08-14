@@ -161,7 +161,7 @@ main {
     background: #1b5e20;
 }
 
-.mapboxgl-marker {
+.leaflet-marker-icon {
     cursor: pointer;
 }
 
